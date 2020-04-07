@@ -12,19 +12,20 @@
  */
 
 #include "board.h"
-#include "bsp_clock.h"
 
-#include "bsp_led.h"
-#include "bsp_tim.h"
-#include "bsp_rtc.h"
-#include "bsp_adc.h"
-#include "bsp_uart.h"
-#include "bsp_flash.h"
+
 /**
  * @addtogroup    XXX 
  * @{  
  */
+#include "bsp_clock.h"
 
+//#include "bsp_led.h"
+//#include "bsp_tim.h"
+//#include "bsp_rtc.h"
+//#include "bsp_adc.h"
+//#include "bsp_uart.h"
+//#include "bsp_flash.h"
 /**
  * @addtogroup    board_Modules 
  * @{  
@@ -107,13 +108,12 @@
  */
 void Board_Init_ClockRUN(void)
 {
-	BSP_SystemClockInit();
-	BSP_ShowClock();
+	BSP_Clock_Init(ClockRun_Mode);
 }
 
 void Board_Init_BSP(void)
 {
-	BSP_Flash_Init(); // Flash Init
+//	BSP_Flash_Init(); // Flash Init
 //	BSP_RTC_Init();   //RTC Init
 //	
 //	BSP_UART_Init( BSP_UART2 );

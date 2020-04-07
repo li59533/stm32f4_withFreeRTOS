@@ -13,8 +13,6 @@
 #include "bsp_conf.h"
 #include "bsp_tim.h"
 
-#include "bsp_clock.h"
-
 #include "clog.h"
 /**
  * @addtogroup    XXX 

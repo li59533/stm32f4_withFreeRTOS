@@ -70,7 +70,7 @@
  * @brief         
  * @{  
  */
-flash_config_t bsp_flashconfig ;  
+
 /**
  * @}
  */
@@ -113,24 +113,7 @@ flash_config_t bsp_flashconfig ;
  
 void BSP_Flash_Init(void)
 {	
-	uint32_t pflashBlockBase = 0;
-    uint32_t pflashTotalSize = 0;
-    uint32_t pflashSectorSize = 0;
-	
-	FLASH_Init( &bsp_flashconfig);
-	
-    /* Get flash properties*/
-    FLASH_GetProperty(&bsp_flashconfig, kFLASH_PropertyPflashBlockBaseAddr, &pflashBlockBase);
-    FLASH_GetProperty(&bsp_flashconfig, kFLASH_PropertyPflashTotalSize, &pflashTotalSize);
-    FLASH_GetProperty(&bsp_flashconfig, kFLASH_PropertyPflashSectorSize, &pflashSectorSize);	
-	
-   /* print welcome message */
-    DEBUG("\r\n PFlash Example Start \r\n");
-    /* Print flash information - PFlash. */
-    DEBUG("\r\n PFlash Information: ");
-    DEBUG("\r\n Total Program Flash Size:\t%d KB, Hex: (0x%x)\r\n", (pflashTotalSize / 1024), pflashTotalSize);
-    DEBUG("\r\n Program Flash Sector Size:\t%d KB, Hex: (0x%x) \r\n", (pflashSectorSize / 1024), pflashSectorSize);	
-	
+
 }	
 
 int8_t BSP_Flash_WriteBytes(uint32_t AddrStart,uint8_t *buf,uint16_t len)
@@ -141,8 +124,8 @@ int8_t BSP_Flash_WriteBytes(uint32_t AddrStart,uint8_t *buf,uint16_t len)
 	memcpy(flash_temp ,buf ,len );
 	
 	__disable_irq();
-	FLASH_Erase(&bsp_flashconfig, AddrStart , 0x400, kFLASH_ApiEraseKey);
-	FLASH_Program(&bsp_flashconfig, AddrStart ,(uint32_t *) flash_temp, 0x400);
+//	FLASH_Erase(&bsp_flashconfig, AddrStart , 0x400, kFLASH_ApiEraseKey);
+//	FLASH_Program(&bsp_flashconfig, AddrStart ,(uint32_t *) flash_temp, 0x400);
 	__enable_irq();
 	return 0;
 }

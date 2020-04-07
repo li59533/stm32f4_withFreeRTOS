@@ -10,13 +10,14 @@
       <TargetName>Normal</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
+      <pCCUsed>5060750::V5.06 update 6 (build 750)::ARMCC</pCCUsed>
       <uAC6>0</uAC6>
       <TargetOption>
         <TargetCommonOption>
           <Device>STM32F407ZETx</Device>
           <Vendor>STMicroelectronics</Vendor>
-          <PackID>Keil.STM32F4xx_DFP.2.13.0</PackID>
-          <PackURL>http://www.keil.com/pack</PackURL>
+          <PackID>Keil.STM32F4xx_DFP.2.14.0</PackID>
+          <PackURL>http://www.keil.com/pack/</PackURL>
           <Cpu>IRAM(0x20000000,0x00020000) IRAM2(0x10000000,0x00010000) IROM(0x08000000,0x00080000) CPUTYPE("Cortex-M4") FPU2 CLOCK(12000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
@@ -257,17 +258,17 @@
                 <Size>0x0</Size>
               </XRAM>
               <OCR_RVCT1>
-                <Type>0</Type>
+                <Type>1</Type>
                 <StartAddress>0x0</StartAddress>
                 <Size>0x0</Size>
               </OCR_RVCT1>
               <OCR_RVCT2>
-                <Type>0</Type>
+                <Type>1</Type>
                 <StartAddress>0x0</StartAddress>
                 <Size>0x0</Size>
               </OCR_RVCT2>
               <OCR_RVCT3>
-                <Type>0</Type>
+                <Type>1</Type>
                 <StartAddress>0x0</StartAddress>
                 <Size>0x0</Size>
               </OCR_RVCT3>
@@ -277,7 +278,7 @@
                 <Size>0x80000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
-                <Type>0</Type>
+                <Type>1</Type>
                 <StartAddress>0x0</StartAddress>
                 <Size>0x0</Size>
               </OCR_RVCT5>
@@ -335,9 +336,9 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define></Define>
+              <Define>USE_HAL_DRIVER,STM32F407xx,USE_HAL_DRIVER,STM32F407xx</Define>
               <Undefine></Undefine>
-              <IncludePath></IncludePath>
+              <IncludePath>..\fml;..\mdl;..\mdl\rttviewer;..\Utilities;..\bsp;..\components\STM32F4xx_HAL_Driver\Inc;..\components\STM32F4xx_HAL_Driver\Inc\Legacy;..\components\STM32F4xx_HAL_Driver\Src;..\components;..\app;..\components\CMSIS\Core\Include;..\components\CMSIS\Core_A\Include;..\components\CMSIS\Device\ST\STM32F4xx\Include;..\components\CMSIS\Include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -380,12 +381,108 @@
       <Groups>
         <Group>
           <GroupName>components/startup</GroupName>
+          <Files>
+            <File>
+              <FileName>startup_stm32f407xx.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>..\components\CMSIS\Device\ST\STM32F4xx\Source\Templates\arm\startup_stm32f407xx.s</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>components/utilities</GroupName>
+          <Files>
+            <File>
+              <FileName>stm32f4xx_hal_msp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\stm32f4xx_hal_msp.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_hal_timebase_tim.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\stm32f4xx_hal_timebase_tim.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_it.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\stm32f4xx_it.c</FilePath>
+            </File>
+            <File>
+              <FileName>system_stm32f4xx.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\CMSIS\Device\ST\STM32F4xx\Source\Templates\system_stm32f4xx.c</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>components/driver</GroupName>
+          <Files>
+            <File>
+              <FileName>stm32f4xx_hal.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_hal_cortex.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_cortex.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_hal_crc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_crc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_hal_flash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_flash.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_hal_gpio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_gpio.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_hal_rcc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_rcc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_hal_rcc_ex.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_rcc_ex.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_hal_rtc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_rtc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_hal_tim.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_tim.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_hal_flash_ex.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_flash_ex.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_hal_dma.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_dma.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_hal_dma_ex.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_dma_ex.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_hal_tim_ex.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_tim_ex.c</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>app</GroupName>
@@ -399,21 +496,99 @@
         </Group>
         <Group>
           <GroupName>bsp</GroupName>
+          <Files>
+            <File>
+              <FileName>bsp_systick.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\bsp\bsp_systick.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_flash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\bsp\bsp_flash.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_clock.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\bsp\bsp_clock.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_conf.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\bsp\bsp_conf.h</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>fml</GroupName>
+          <Files>
+            <File>
+              <FileName>lnprotocol.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\fml\lnprotocol.c</FilePath>
+            </File>
+            <File>
+              <FileName>lnprotocol_std.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\fml\lnprotocol_std.c</FilePath>
+            </File>
+            <File>
+              <FileName>system_param.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\fml\system_param.c</FilePath>
+            </File>
+            <File>
+              <FileName>version.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\fml\version.c</FilePath>
+            </File>
+            <File>
+              <FileName>version.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\fml\version.h</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>mdk</GroupName>
         </Group>
         <Group>
           <GroupName>mdl</GroupName>
+          <Files>
+            <File>
+              <FileName>clog.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdl\rttviewer\clog.c</FilePath>
+            </File>
+            <File>
+              <FileName>SEGGER_RTT.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdl\rttviewer\SEGGER_RTT.c</FilePath>
+            </File>
+            <File>
+              <FileName>SEGGER_RTT_printf.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdl\rttviewer\SEGGER_RTT_printf.c</FilePath>
+            </File>
+            <File>
+              <FileName>board.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mdl\board.c</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>task</GroupName>
         </Group>
         <Group>
           <GroupName>uti</GroupName>
+          <Files>
+            <File>
+              <FileName>crc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Utilities\crc.c</FilePath>
+            </File>
+          </Files>
         </Group>
       </Groups>
     </Target>

@@ -13,7 +13,7 @@
 
 #include "bsp_systick.h"
 #include "bsp_conf.h"
-#include "osal.h"
+
 /**
  * @addtogroup    XXX 
  * @{  
@@ -102,13 +102,13 @@ static uint32_t s_Systick_Ticks = 0;
  */
 void BSP_SysTick_Init(void)
 {
-	SysTick_Config(CLOCK_GetFreq(kCLOCK_CoreSysClk) / 1000);
+	//SysTick_Config(CLOCK_GetFreq(kCLOCK_CoreSysClk) / 1000);
 }
 
 void BSP_SysTick_DisableIRQ(void)
 {
-	SysTick->CTRL = 0x00010006;
-	NVIC_DisableIRQ(SysTick_IRQn);
+	//SysTick->CTRL = 0x00010006;
+	//NVIC_DisableIRQ(SysTick_IRQn);
 }
 
 
@@ -130,18 +130,12 @@ void BSP_Systick_Delayms(uint32_t ticks) // block delay
     tickstart = BSP_SYSTICK_GetTick();
     while ((BSP_SYSTICK_GetTick() - tickstart) < ticks) 
     {
+		
+		
     }
 }
 
 
-void SysTick_Handler(void)
-{
-	
-	OS_Timer_Update(1);
-	OS_Clock_Update(1);
-	BSP_SYSTICK_IncTick();
-
-}
 
 /**
  * @}

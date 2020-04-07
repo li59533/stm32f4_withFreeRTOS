@@ -14,13 +14,14 @@
 #include "main.h"
 #include "board.h"
 #include "clog.h"
-#include "osal.h"
+
 
 #include "bsp_led.h"
 /**
  * @addtogroup    XXX 
  * @{  
  */
+#include "bsp_conf.h" 
 #include "bsp_systick.h"
 #include "system_param.h"
 
@@ -106,22 +107,29 @@
  */
 int main(void)
 {
+	
+	HAL_Init();
+	
+	
 	Board_Init_ClockRUN();
 	
-	BSP_SysTick_Init();
-	
-	Board_Init_BSP();
-	
-	SystemParam_Init();
+//	BSP_SysTick_Init();
+//	
+//	Board_Init_BSP();
+//	
+//	SystemParam_Init();
 
-	OS_Init(); // init osal
-    
-    OS_Start(); // while(1)
+//	OS_Init(); // init os
+//    
+//    OS_Start(); // while(1)
 	
 	while(1)
 	{
-		DEBUG("MAIN Some Err\r\n");
+		HAL_Delay(1000);
+		DEBUG("Test\r\n");
 	}
+
+
 }
 
 
@@ -132,15 +140,6 @@ void Error_Handler(void)
 		DEBUG(0,"Error_Handler\r\n");
 	};
 }
-
-void HardFault_Handler(void)
-{
-	while(1)
-	{
-		DEBUG("HardFault_Handler\r\n");
-	};	
-}
-
 
 /**
  * @}
