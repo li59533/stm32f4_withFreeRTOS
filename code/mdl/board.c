@@ -20,7 +20,7 @@
  */
 #include "bsp_clock.h"
 
-//#include "bsp_led.h"
+#include "bsp_led.h"
 //#include "bsp_tim.h"
 //#include "bsp_rtc.h"
 //#include "bsp_adc.h"
@@ -122,6 +122,8 @@ void Board_Init_BSP(void)
 //	BSP_ADC_Init();
 //	BSP_UART_Init( BSP_UART0 );
 //	BSP_UART_Init( BSP_UART2 );
+	
+	BSP_LED_Init();	
 // ------------------------------
 	
 }
@@ -138,6 +140,9 @@ void BSP_Test_Delay(uint32_t count)
 		i = 1000;
 	}
 }
+
+
+
 // ------------------------------------
 
 /**

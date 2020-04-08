@@ -113,9 +113,9 @@ int main(void)
 	
 	Board_Init_ClockRUN();
 	
-//	BSP_SysTick_Init();
-//	
-//	Board_Init_BSP();
+	BSP_SysTick_Init();
+	
+	Board_Init_BSP();
 //	
 //	SystemParam_Init();
 
@@ -125,6 +125,8 @@ int main(void)
 	
 	while(1)
 	{
+		BSP_LED_TestFunc();
+		
 		HAL_Delay(1000);
 		DEBUG("Test\r\n");
 	}

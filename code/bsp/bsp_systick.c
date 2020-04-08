@@ -19,7 +19,6 @@
  * @{  
  */
 #include "clog.h"
-#include "bsp_led.h"
 /**
  * @addtogroup    bsp_systick_Modules 
  * @{  
@@ -40,7 +39,7 @@
  * @brief         
  * @{  
  */
-
+#define  TICK_INT_PRIORITY            ((uint32_t)0U)   /*!< tick interrupt priority */ 
 /**
  * @}
  */
@@ -102,6 +101,24 @@ static uint32_t s_Systick_Ticks = 0;
  */
 void BSP_SysTick_Init(void)
 {
+	/* Configure the SysTick to have interrupt in 1ms time basis*/
+	if (HAL_SYSTICK_Config(SystemCoreClock / (1000U / uwTickFreq)) > 0U)
+	{
+
+	}	
+	/* Configure the SysTick IRQ priority */
+	if (TICK_INT_PRIORITY < (1UL << __NVIC_PRIO_BITS))
+	{
+		HAL_NVIC_SetPriority(SysTick_IRQn, TICK_INT_PRIORITY, 0U);
+		uwTickPrio = TICK_INT_PRIORITY;
+	}
+	else
+	{
+
+	}	
+	
+	
+	
 	//SysTick_Config(CLOCK_GetFreq(kCLOCK_CoreSysClk) / 1000);
 }
 

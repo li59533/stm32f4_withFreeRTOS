@@ -33,7 +33,7 @@
 #define BSP_LED3        2
 
 
-#define BSP_LEDCOUNT    1
+#define BSP_LEDCOUNT    2
 
 #define BSP_LED_BLINK_ENABLE   TRUE
 
@@ -84,6 +84,13 @@ void BSP_LED_Close(uint8_t BSP_LEDx);
 void BSP_LED_Toggle(uint8_t BSP_LEDx);
 void BSP_LED_Blink(uint8_t BSP_LEDx, uint8_t numBlinks, uint8_t percent, uint16_t period);
 void BSP_LED_Update(void);
+
+
+// --------Test Func ------------
+void BSP_LED_TestFunc(void);
+
+// ------------------------------
+
 
 /**
  * @}
