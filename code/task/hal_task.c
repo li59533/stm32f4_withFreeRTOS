@@ -11,7 +11,7 @@
  **************************************************************************************************
  */
 #include "self_def.h"
-#include "osal.h"
+
 #include "hal_task.h"
 
 /**
@@ -79,7 +79,7 @@
  * @brief         
  * @{  
  */
-uint8_t g_HalTask_Id = 0;
+
 /**
  * @}
  */
@@ -99,36 +99,6 @@ uint8_t g_HalTask_Id = 0;
  * @brief         
  * @{  
  */
-void HalTask_Init(uint8_t taskId)
-{
-    g_HalTask_Id = taskId;
-	
-	BSP_LED_Init();
-}
-
-osal_event_t HalTask_Process(uint8_t taskid,osal_event_t events)
-{
-	if (events & HAL_TASK_LED_BLINK_EVENT)
-    {			
-		BSP_LED_Update();
-        return events ^ HAL_TASK_LED_BLINK_EVENT;
-    }
-	if (events & HAL_TASK_ADC_CALC_EVENT)
-    {			
-        return events ^ HAL_TASK_ADC_CALC_EVENT;
-    }
-    return 0;
-}
-
-void HalTask_Send_Event(osal_event_t events)
-{
-    OS_Events_Set(g_HalTask_Id,events);
-}
-
-void HalTask_Clear_Event(osal_event_t events)
-{
-
-}
 
 
 /**
