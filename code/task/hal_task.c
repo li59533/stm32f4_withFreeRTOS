@@ -99,7 +99,10 @@
  * @brief         
  * @{  
  */
-
+void Hal_Task( void * pvParameter)
+{
+	
+}
 
 /**
  * @}

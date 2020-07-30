@@ -98,7 +98,10 @@
  * @brief         
  * @{  
  */
-
+void User_Task( void * pvParameter)
+{
+	
+}
 
 /**
  * @}

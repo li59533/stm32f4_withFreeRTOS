@@ -14,7 +14,7 @@
 #include "main.h"
 #include "board.h"
 #include "clog.h"
-
+#include "os_init.h"
 
 #include "bsp_led.h"
 /**
@@ -116,12 +116,8 @@ int main(void)
 	BSP_SysTick_Init();
 	
 	Board_Init_BSP();
-//	
-//	SystemParam_Init();
-
-//	OS_Init(); // init os
-//    
-//    OS_Start(); // while(1)
+	
+	RTOS_Init();
 	
 	while(1)
 	{

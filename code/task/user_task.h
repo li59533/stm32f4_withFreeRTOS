@@ -64,7 +64,7 @@
  * @defgroup      user_task_Exported_Functions 
  * @{  
  */
-
+void User_Task( void * pvParameter);
 /**
  * @}
  */

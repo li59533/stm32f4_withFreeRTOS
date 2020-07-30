@@ -13,6 +13,7 @@
 #include "os_init.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "clog.h"
 /**
  * @addtogroup    XXX 
  * @{  
@@ -105,15 +106,15 @@
 void RTOS_Init(void)
 {
 	BaseType_t basetype = { 0 };
-	basetype = xTaskCreate(First_Task,\
-							"First Task",\
+	basetype = xTaskCreate(Hal_Task,\
+							"Hal_Task",\
 							1024,
 							NULL,
 							3,
 							(TaskHandle_t *)NULL);
 
-	basetype = xTaskCreate(Second_Task,\
-							"Second Task",\
+	basetype = xTaskCreate(	User_Task,\
+							"User_Task",\
 							1024,
 							NULL,
 							2,
@@ -125,6 +126,10 @@ void RTOS_Init(void)
 	if(pdPASS == basetype)
 	{
 		vTaskStartScheduler();
+	}
+	else
+	{
+		
 	}
 	
 }

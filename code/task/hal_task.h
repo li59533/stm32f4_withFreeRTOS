@@ -63,7 +63,7 @@
  * @defgroup      hal_task_Exported_Functions 
  * @{  
  */
-
+void Hal_Task( void * pvParameter);
 
 /**
  * @}
