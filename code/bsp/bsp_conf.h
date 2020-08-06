@@ -43,7 +43,7 @@
 #define BSP_RTC_MODULE_ENABLE			0
 #define BSP_ADC_MODULE_ENABLE			0
 #define BSP_DMA_MODULE_ENABLE			0
-#define BSP_USART_MODULE_ENABLE			0
+#define BSP_USART_MODULE_ENABLE			1
 #define BSP_FLASH_MODULE_ENABLE			0
 #define BSP_LPV_MODULE_ENABLE			0
 
@@ -102,10 +102,8 @@
 #endif	
 
 #if BSP_USART_MODULE_ENABLE == 1	
-	#include "fsl_uart.h"
-	#include "fsl_lpsci.h"
-	#include "fsl_lpsci_dma.h"
-	#include "fsl_uart_dma.h"
+	#include "stm32f4xx_hal_uart.h"
+	#include "stm32f4xx_hal_usart.h"
 #endif	
 
 #if BSP_FLASH_MODULE_ENABLE == 1	

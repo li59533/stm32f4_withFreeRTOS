@@ -69,6 +69,56 @@
  * @brief         
  * @{  
  */
+ 
+UART_HandleTypeDef huart1;
+DMA_HandleTypeDef hdma_usart1_tx; 
+ 
+ 
+static uint8_t USART1_Tx_Buf[BSP_USART1_TXBUF_SIZE] = { 0 };
+static uint8_t USART1_Rx_Buf[BSP_USART1_RXBUF_SIZE] = { 0 };
+
+static uint8_t USART6_Tx_Buf[BSP_USART6_TXBUF_SIZE] = { 0 };
+static uint8_t USART6_Rx_Buf[BSP_USART6_RXBUF_SIZE] = { 0 };
+
+
+
+static STM32F4xxUSART_Instance_t STM32F4xxUSART_Instance[BSP_UART_COUNT] = {
+    /* USART1 */
+    {
+        /* USART_TypeDef */
+        .Instance = USART1,
+        /* tx buf */
+        .TxBuf.pData = USART1_Tx_Buf,
+        .TxBuf.Size = sizeof(USART1_Tx_Buf) / sizeof(USART1_Tx_Buf[0]),
+        .TxBuf.Count = 0,
+        .TxBuf.In = 0,
+        .TxBuf.Out = 0,
+        /* rx buf */
+        .RxBuf.pData = USART1_Rx_Buf,
+        .RxBuf.Size = sizeof(USART1_Rx_Buf) / sizeof(USART1_Rx_Buf[0]),
+        .RxBuf.Count = 0,
+        .RxBuf.In = 0,
+        .RxBuf.Out = 0,
+    },
+    /* USART6 */
+    {
+        /* USART_TypeDef */
+        .Instance = USART6,
+        /* tx buf */
+        .TxBuf.pData = USART6_Tx_Buf,
+        .TxBuf.Size = sizeof(USART6_Tx_Buf) / sizeof(USART6_Tx_Buf[0]),
+        .TxBuf.Count = 0,
+        .TxBuf.In = 0,
+        .TxBuf.Out = 0,
+        /* rx buf */
+        .RxBuf.pData = USART6_Rx_Buf,
+        .RxBuf.Size = sizeof(USART6_Rx_Buf) / sizeof(USART6_Rx_Buf[0]),
+        .RxBuf.Count = 0,
+        .RxBuf.In = 0,
+        .RxBuf.Out = 0,
+    },
+};
+
 
 /**
  * @}
@@ -89,23 +139,15 @@
  * @brief         
  * @{  
  */
-static void bsp_uart0_init(void);
-static void bsp_uart1_init(void);
-static void bsp_uart2_init(void);
-
-static void bsp_uart0_dma_init(void);
-static void bsp_uart2_dma_init(void);
-
-static void uart_dma_transfer_callback(UART_Type *base,
-                                             uart_dma_handle_t *handle,
-                                             status_t status,
-                                             void *userData);
-
-static void lpsci_dma_transfer_callback(UART0_Type *base,
-                                              lpsci_dma_handle_t *handle,
-                                              status_t status,
-                                              void *userData);
-
+static uint16_t bsp_usartTx_getqueuefreespace(uint8_t BSP_USARTx);
+static int8_t bsp_usartTx_enqueue(uint8_t BSP_USARTx, uint8_t * buf,uint16_t len);
+static uint16_t bsp_getusartTx_count(uint8_t BSP_USARTx);
+static int8_t bsp_usartTx_dequeue(uint8_t BSP_USARTx , uint8_t * buf_byte);
+/*
+static void bsp_usart_485en_init(void);  // init the 485 EN pin
+static void bsp_usart_485en_T(uint8_t BSP_USARTx);
+static void bsp_usart_485en_R(uint8_t BSP_USARTx);
+*/
 
 /**
  * @}
@@ -116,466 +158,414 @@ static void lpsci_dma_transfer_callback(UART0_Type *base,
  * @brief         
  * @{  
  */
-/*
-PE16 -> TX2  ALT3
-PE17 -> RX2  ALT3
 
 
-PA2 -> TX0	ALT2
-PA1 -> RX0	ALT2
-*/
-
-
-void BSP_UART_Init(uint8_t BSP_UARTX)
+void BSP_USART_Open(uint8_t BSP_USARTx, uint8_t *userparams)
 {
-	switch(BSP_UARTX)
+
+	USART_HandleTypeDef USART_Handle ; 
+	switch(BSP_USARTx)
 	{
-		case BSP_UART0: bsp_uart0_init();break;
-		case BSP_UART1: bsp_uart1_init();break;
-		case BSP_UART2: bsp_uart2_init();break;
-		default:break;
-	}
-}
+		case BSP_USART1:
+		{	
+			// ----CLK ENABLE----------
 
-void BSP_UART_SetBaudRate(uint8_t BSP_UARTX , uint32_t buadrate)
-{
-	switch(BSP_UARTX)
-	{
-		case BSP_UART0: 
-		{
-			LPSCI_SetBaudRate(UART0, buadrate, CLOCK_GetFreq(kCLOCK_CoreSysClk));
-			LPSCI_EnableRx(UART0, true);
-	
-			// -----------------------
+			// ------------------------
+			
+			// ----GPIO INIT-----------
 
-			// --------open irq-------
-			LPSCI_EnableInterrupts( UART0, kLPSCI_RxDataRegFullInterruptEnable);
+			/* GPIO Alternate functions configuration function ****************************/
 
-			//LPSCI_EnableInterrupts( UART0, kLPSCI_TransmissionCompleteInterruptEnable);
+			// ------------------------
+			/* Initialization and Configuration functions *********************************/
+			huart1.Instance = USART1;
+			huart1.Init.BaudRate = 115200;
+			huart1.Init.WordLength = UART_WORDLENGTH_8B;
+			huart1.Init.StopBits = UART_STOPBITS_1;
+			huart1.Init.Parity = UART_PARITY_NONE;
+			huart1.Init.Mode = UART_MODE_TX_RX;
+			huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+			huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+			if (HAL_UART_Init(&huart1) != HAL_OK)
+			{
+			Error_Handler();
+			}
+			// ---------DMA Init -------------------
+			
+			if(BSP_USART1_TX_DMA_ACTIVE)
+			{
 
-			EnableIRQ(UART0_IRQn);
+			}
+			if(BSP_USART1_RX_DMA_ACTIVE)
+			{
+
+			}
+
+			// ---------OPEN IT---------------------
+			//USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
+			
+			if(BSP_USART1_IDEL_ACTIVE)
+			{
+				
+			}
+			// -------Init the NVIC-----------------
+			
+			// ------USART Start -------
+			
 		}
 		break;
-		case BSP_UART1: bsp_uart1_init();break;
-		case BSP_UART2: bsp_uart2_init();break;
+		case BSP_USART6:
+		{
+			// ----CLK ENABLE----------
+
+		}
+		break;
+		default:break;
+	}
+	
+}
+
+void BSP_USART_Close(uint8_t BSP_USARTx)
+{
+	
+}
+
+
+
+// ----------- Msp Func ------------
+void HAL_UART_MspInit(UART_HandleTypeDef* huart)
+{
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+	if(huart->Instance == USART1)
+	{
+		/* USER CODE BEGIN USART1_MspInit 0 */
+
+		/* USER CODE END USART1_MspInit 0 */
+		/* Peripheral clock enable */
+		__HAL_RCC_USART1_CLK_ENABLE();
+
+		__HAL_RCC_GPIOA_CLK_ENABLE();
+		
+		/**USART1 GPIO Configuration
+		PA9     ------> USART1_TX
+		PA10     ------> USART1_RX
+		*/
+		
+		GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_10;
+		GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+		GPIO_InitStruct.Pull = GPIO_NOPULL;
+		GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+		GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
+		HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+		/* USART1 DMA Init */
+		/* USART1_TX Init */
+		hdma_usart1_tx.Instance = DMA2_Stream7;
+		hdma_usart1_tx.Init.Channel = DMA_CHANNEL_4;
+		hdma_usart1_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
+		hdma_usart1_tx.Init.PeriphInc = DMA_PINC_DISABLE;
+		hdma_usart1_tx.Init.MemInc = DMA_MINC_ENABLE;
+		hdma_usart1_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+		hdma_usart1_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+		hdma_usart1_tx.Init.Mode = DMA_NORMAL;
+		hdma_usart1_tx.Init.Priority = DMA_PRIORITY_LOW;
+		hdma_usart1_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+		if (HAL_DMA_Init(&hdma_usart1_tx) != HAL_OK)
+		{
+		Error_Handler();
+		}
+
+		__HAL_LINKDMA(huart,hdmatx,hdma_usart1_tx);
+
+		/* USART1 interrupt Init */
+		HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
+		HAL_NVIC_EnableIRQ(USART1_IRQn);
+		/* USER CODE BEGIN USART1_MspInit 1 */
+
+		/* USER CODE END USART1_MspInit 1 */
+	}
+}
+
+
+void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
+{
+	if(huart->Instance==USART1)
+	{
+		/* USER CODE BEGIN USART1_MspDeInit 0 */
+
+		/* USER CODE END USART1_MspDeInit 0 */
+		/* Peripheral clock disable */
+		__HAL_RCC_USART1_CLK_DISABLE();
+
+		/**USART1 GPIO Configuration
+		PA9     ------> USART1_TX
+		PA10     ------> USART1_RX
+		*/
+		HAL_GPIO_DeInit(GPIOA, GPIO_PIN_9|GPIO_PIN_10);
+
+		/* USART1 DMA DeInit */
+		HAL_DMA_DeInit(huart->hdmatx);
+
+		/* USART1 interrupt DeInit */
+		HAL_NVIC_DisableIRQ(USART1_IRQn);
+		/* USER CODE BEGIN USART1_MspDeInit 1 */
+
+		/* USER CODE END USART1_MspDeInit 1 */
+	}
+}
+
+
+
+// --------------------------------
+// ---------- 485 en --------------
+/*
+static void bsp_usart_485en_R(uint8_t BSP_USARTx)
+{
+	switch(BSP_USARTx)
+	{
+		case BSP_USART1: break;
+		case BSP_USART6: break;
 		default:break;
 	}
 }
-	 
 
-void BSP_Uart0_Close(void)
+static void bsp_usart_485en_T(uint8_t BSP_USARTx)
 {
-	LPSCI_Deinit(UART0);
-	
-	
-	PORT_SetPinMux(PORTA, 2,kPORT_MuxAsGpio);
-	gpio_pin_config_t gpio_pin_config;
-	gpio_pin_config.outputLogic = 0;
-	gpio_pin_config.pinDirection = kGPIO_DigitalInput;
-	GPIO_PinInit(GPIOA, 2, &gpio_pin_config);
-	
-	PORT_SetPinMux(PORTA, 1,kPORT_MuxAsGpio);
-	gpio_pin_config.outputLogic = 0;
-	gpio_pin_config.pinDirection = kGPIO_DigitalInput;
-	GPIO_PinInit(GPIOA, 1, &gpio_pin_config);
-	
-	CLOCK_EnableClock(kCLOCK_PortA);
-	
-	// -----------------------		
+	switch(BSP_USARTx)
+	{
+		case BSP_USART1: break;
+		case BSP_USART6: break;
+		default:break;
+	}
 }
+*/
+// --------------------------------
 
-void BSP_Uart0_Open(void)
+void BSP_USART_WriteBytes_DMA(uint8_t BSP_USARTx,uint8_t* pbuf,uint16_t len)
 {
-	BSP_UART_Init( BSP_UART0 );
-	BSP_UART_SetBaudRate(BSP_UART0 , 115200);
-}
+	switch(BSP_USARTx)
+	{
+		case BSP_USART1:
+		{
+			bsp_usartTx_enqueue(BSP_USART1,pbuf,len);
+			if(bsp_getusartTx_count(BSP_USART1) > 0)
+			{
+				//HAL_UART_Transmit_DMA(&huart1, uint8_t *pData, uint16_t Size);				
+				
+				/*
+				DMA_Cmd(DMA2_Stream7,DISABLE);	
+				bsp_usart_485en_T(BSP_USART1);				
+				if(STM32F4xxUSART_Instance[BSP_USART1].TxBuf.In < STM32F4xxUSART_Instance[BSP_USART1].TxBuf.Out)
+				{
+					DMA2_Stream7->NDTR = STM32F4xxUSART_Instance[BSP_USART1].TxBuf.Size - STM32F4xxUSART_Instance[BSP_USART1].TxBuf.Out;					
+				}
+				else
+				{
+					DMA2_Stream7->NDTR = STM32F4xxUSART_Instance[BSP_USART1].TxBuf.In - STM32F4xxUSART_Instance[BSP_USART1].TxBuf.Out;
+				}
+				
+				STM32F4xxUSART_Instance[BSP_USART1].TxCount = DMA2_Stream7->NDTR;
+				DMA2_Stream7->M0AR = (uint32_t)(STM32F4xxUSART_Instance[BSP_USART1].TxBuf.pData + STM32F4xxUSART_Instance[BSP_USART1].TxBuf.Out);
+				DMA_Cmd(DMA2_Stream7,ENABLE);	
+				DMA_ClearITPendingBit(DMA2_Stream7, DMA_IT_TCIF7);
+				DMA_ITConfig(DMA2_Stream7, DMA_IT_TC,  ENABLE);
+				*/
+			}
+		}
+		break;
+		case BSP_USART6:
+		{
+					
+		}
+		break;
+		default:
+		{
+			DEBUG("Usart %d is err\r\n",BSP_USARTx);
+		}
+		break;
+	}
 
-
-static void bsp_uart0_init(void)
-{
-	// -------gpio init ------
-	CLOCK_EnableClock(kCLOCK_PortA);
-	PORT_SetPinMux(PORTA, 2,kPORT_MuxAlt2);
-	gpio_pin_config_t gpio_pin_config;
-	gpio_pin_config.outputLogic = 0;
-	gpio_pin_config.pinDirection = kGPIO_DigitalOutput;
-	GPIO_PinInit(GPIOA, 2, &gpio_pin_config);
-	
-	PORT_SetPinMux(PORTA, 1,kPORT_MuxAlt2);
-	gpio_pin_config.outputLogic = 0;
-	gpio_pin_config.pinDirection = kGPIO_DigitalInput;
-	GPIO_PinInit(GPIOA, 1, &gpio_pin_config);
-	// -----------------------		
-	
-	// -------uart 0 init ----
-	CLOCK_EnableClock(kCLOCK_Uart0);
-	CLOCK_SetLpsci0Clock(1);
-	
-	lpsci_config_t config;
-	LPSCI_GetDefaultConfig( &config );
-	config.baudRate_Bps = 9600U;
-/*
- *   lpsciConfig->baudRate_Bps = 115200U;
- *   lpsciConfig->parityMode = kLPSCI_ParityDisabled;
- *   lpsciConfig->stopBitCount = kLPSCI_OneStopBit;
- *   lpsciConfig->enableTx = false;
- *   lpsciConfig->enableRx = false;
-*/	
-	LPSCI_Init( UART0, &config, CLOCK_GetFreq(kCLOCK_CoreSysClk));
-	LPSCI_EnableTx(UART0, true);
-	LPSCI_EnableRx(UART0, true);
-	
-	// -----------------------
-	
-	// --------open irq-------
-	LPSCI_EnableInterrupts( UART0, kLPSCI_RxDataRegFullInterruptEnable);
-	
-	//LPSCI_EnableInterrupts( UART0, kLPSCI_TransmissionCompleteInterruptEnable);
-	
-	EnableIRQ(UART0_IRQn);
-	
-	// -----------------------
-	
-// -----------DMA ------------------------
-	bsp_uart0_dma_init();
-// ---------------------------------------	
 	
 }
 
-
-
-
-static void bsp_uart1_init(void)
+uint16_t BSP_USART_ReadBytes_DMA(uint8_t BSP_USARTx)
 {
-	
-}
-
-static void bsp_uart2_init(void)
-{
-	// -------gpio init ------
-	CLOCK_EnableClock(kCLOCK_PortE);
-	PORT_SetPinMux(PORTE, 16,kPORT_MuxAlt3);
-	gpio_pin_config_t gpio_pin_config;
-	gpio_pin_config.outputLogic = 0;
-	gpio_pin_config.pinDirection = kGPIO_DigitalOutput;
-	GPIO_PinInit(GPIOE, 16, &gpio_pin_config);
-	
-	PORT_SetPinMux(PORTE, 17,kPORT_MuxAlt3);
-	gpio_pin_config.outputLogic = 0;
-	gpio_pin_config.pinDirection = kGPIO_DigitalInput;
-	GPIO_PinInit(GPIOE, 17, &gpio_pin_config);
-	// -----------------------	
-	
-	// -------uart 2 init ----
-	CLOCK_EnableClock(kCLOCK_Uart2);
-	
-	uart_config_t config ;
-	UART_GetDefaultConfig(&config);
-	config.baudRate_Bps = 9600U;
-
-/*
-*   uartConfig->bitCountPerChar = kUART_8BitsPerChar;
- *   uartConfig->parityMode = kUART_ParityDisabled;
- *   uartConfig->stopBitCount = kUART_OneStopBit;
- *   uartConfig->txFifoWatermark = 0;
- *   uartConfig->rxFifoWatermark = 1;
- *   uartConfig->enableTx = false;
- *   uartConfig->enableRx = false;	
-*/	
-	UART_Init(UART2, &config,  CLOCK_GetFreq(kCLOCK_BusClk));
-	
-	UART_EnableTx(UART2, true);
-	UART_EnableRx(UART2, true);
-// --------------------------------------
-	// -----------------------
-	// --------open irq-------
-	//UART_EnableInterrupts(UART2, kUART_TransmissionCompleteInterruptEnable);
-	UART_EnableInterrupts(UART2, kUART_RxDataRegFullInterruptEnable);
-	UART_EnableInterrupts(UART2, kUART_RxActiveEdgeInterruptEnable);
-	
-	
-	NVIC_EnableIRQ(UART2_IRQn);
-
-	// -----------------------	
-// -----------DMA ------------------------
-	bsp_uart2_dma_init();
-// ---------------------------------------
-}
-
-dma_handle_t uart0_dmahandle;
-dma_transfer_config_t uart0_dmatran_config;
-
-#define BSP_UART0_TX_BUFLEN   1
-uint8_t bsp_uart0_Tx_buf[BSP_UART0_TX_BUFLEN] = { 0 }; 
-lpsci_dma_handle_t  uart0_dma_handle;
-
-static void bsp_uart0_dma_init(void)
-{
-	CLOCK_EnableClock(kCLOCK_Dmamux0);
-	CLOCK_EnableClock(kCLOCK_Dma0);
-
-	//LPSCI_EnableTxDMA(UART0 , true);
-	/* Configure DMAMUX */
-    DMAMUX_Init(DMAMUX0);
-	
-	DMAMUX_SetSource(DMAMUX0, 1, kDmaRequestMux0UART0Tx); /* Map Uart0 source to channel 0 */
-    DMAMUX_EnableChannel(DMAMUX0, 1);
-	DMA_Init(DMA0);
-	
-	DMA_CreateHandle(&uart0_dmahandle, DMA0, 1);
-	
-	LPSCI_TransferCreateHandleDMA(UART0,
-                           &uart0_dma_handle,
-                           lpsci_dma_transfer_callback,
-                           0,
-                           &uart0_dmahandle,
-                           0);	
-	
-    /* Setup transfer */
-	
-    DMA_PrepareTransfer(&uart0_dmatran_config, (void *)bsp_uart0_Tx_buf, sizeof(uint8_t),
-                        (void *)LPSCI_GetDataRegisterAddress(UART0), sizeof(uint8_t), sizeof(bsp_uart0_Tx_buf),
-                        kDMA_MemoryToPeripheral);
-
-    DMA_SetTransferConfig(DMA0, 1, &uart0_dmatran_config);
-    /* Enable interrupt when transfer is done. */
-    DMA_EnableInterrupts(DMA0, 1);
-    /* Enable async DMA request. */
-    DMA_EnableAsyncRequest(DMA0, 1, true);
-    /* Forces a single read/write transfer per request. */
-    DMA_EnableCycleSteal(DMA0, 1, true);
-    /* Enable transfer. */
-    //DMA_StartTransfer(&uart0_dmahandle);
-    /* Enable IRQ. */
-    NVIC_EnableIRQ(DMA0_IRQn);	
-						
+	return 0;
 }
 
 
-dma_handle_t uart2_dmahandle;
-dma_transfer_config_t uart2_dmatran_config;
-
-#define BSP_UART2_TX_BUFLEN   1
-uint8_t bsp_uart2_Tx_buf[BSP_UART2_TX_BUFLEN] = { 0 }; 
-uart_dma_handle_t  uart_dma_handle;
-
-static void bsp_uart2_dma_init(void)
+// this send way is very danger !!!!
+void BSP_USART_WriteBytes(uint8_t BSP_USARTx,uint8_t* pBuf,uint16_t length)
 {
-	CLOCK_EnableClock(kCLOCK_Dmamux0);
-	CLOCK_EnableClock(kCLOCK_Dma0);
-	
-	//UART_EnableTxDMA(UART2, true);
-	/* Configure DMAMUX */
-    DMAMUX_Init(DMAMUX0);
-	
-    DMAMUX_SetSource(DMAMUX0, 0, kDmaRequestMux0UART2Tx); /* Map Uart2 source to channel 0 */
-    DMAMUX_EnableChannel(DMAMUX0, 0);
 
-    DMA_Init(DMA0);
-
-    DMA_CreateHandle(&uart2_dmahandle, DMA0, 0);
-
-	UART_TransferCreateHandleDMA(UART2,
-								  &uart_dma_handle,
-								  uart_dma_transfer_callback,
-								  0,
-								  &uart2_dmahandle,
-								  0);
-	
-    /* Setup transfer */
-	
-    DMA_PrepareTransfer(&uart2_dmatran_config, (void *)bsp_uart2_Tx_buf, sizeof(uint8_t),
-                        (void *)UART_GetDataRegisterAddress(UART2), sizeof(uint8_t), sizeof(bsp_uart2_Tx_buf),
-                        kDMA_MemoryToPeripheral);
-						
-    DMA_SetTransferConfig(DMA0, 0, &uart2_dmatran_config);
-    /* Enable interrupt when transfer is done. */
-    DMA_EnableInterrupts(DMA0, 0);
-    /* Enable async DMA request. */
-    DMA_EnableAsyncRequest(DMA0, 0, true);
-    /* Forces a single read/write transfer per request. */
-    DMA_EnableCycleSteal(DMA0, 0, true);
-    /* Enable transfer. */
-    //DMA_StartTransfer(&uart2_dmahandle);
-    /* Enable IRQ. */
-    NVIC_EnableIRQ(DMA0_IRQn);	
-						
 }
-static void uart_dma_transfer_callback(UART_Type *base,
-                                             uart_dma_handle_t *handle,
-                                             status_t status,
-                                             void *userData)
+	
+uint16_t BSP_USART_ReadBytes(uint8_t BSP_USARTx,uint8_t* pBuf,uint16_t length)
 {
-	DEBUG("uart_dma_transfer_callback?\r\n");
+	return 0;
 }
 
-
-static void lpsci_dma_transfer_callback(UART0_Type *base,
-                                              lpsci_dma_handle_t *handle,
-                                              status_t status,
-                                              void *userData)
+void BSP_USART1_TxDMA_IRQHandler(void)
 {
-	DEBUG("lpsci_dma_transfer_callback?\r\n");
+	/*
+	if(DMA_GetITStatus(DMA2_Stream7, DMA_IT_TCIF7) == SET)
+	{
+		DMA_ClearITPendingBit(DMA2_Stream7, DMA_IT_TCIF7);
+		
+		if(DMA_GetCurrDataCounter(DMA2_Stream7) == 0)
+		{
+			if(STM32F4xxUSART_Instance[BSP_USART1].TxBuf.Count > STM32F4xxUSART_Instance[BSP_USART1].TxCount)
+			{
+				STM32F4xxUSART_Instance[BSP_USART1].TxBuf.Count -=STM32F4xxUSART_Instance[BSP_USART1].TxCount;
+			}
+			else
+			{
+				STM32F4xxUSART_Instance[BSP_USART1].TxBuf.Count = 0;
+			}
+			
+			STM32F4xxUSART_Instance[BSP_USART1].TxBuf.Out += STM32F4xxUSART_Instance[BSP_USART1].TxCount;
+			STM32F4xxUSART_Instance[BSP_USART1].TxBuf.Out %= STM32F4xxUSART_Instance[BSP_USART1].TxBuf.Size;
+			
+			if(STM32F4xxUSART_Instance[BSP_USART1].TxBuf.Count > 0)
+			{
+				DMA_Cmd(DMA2_Stream7,DISABLE);				
+				if(STM32F4xxUSART_Instance[BSP_USART1].TxBuf.In < STM32F4xxUSART_Instance[BSP_USART1].TxBuf.Out)
+				{
+					DMA2_Stream7->NDTR = STM32F4xxUSART_Instance[BSP_USART1].TxBuf.Size - STM32F4xxUSART_Instance[BSP_USART1].TxBuf.Out;
+					
+				}
+				else
+				{
+					DMA2_Stream7->NDTR = STM32F4xxUSART_Instance[BSP_USART1].TxBuf.In - STM32F4xxUSART_Instance[BSP_USART1].TxBuf.Out;
+				}
+				STM32F4xxUSART_Instance[BSP_USART1].TxCount = DMA2_Stream7->NDTR;
+				DMA2_Stream7->M0AR = (uint32_t)(STM32F4xxUSART_Instance[BSP_USART1].TxBuf.pData + STM32F4xxUSART_Instance[BSP_USART1].TxBuf.Out);
+				DMA_Cmd(DMA2_Stream7,ENABLE);	
+			}
+			else
+			{
+				USART_ITConfig(USART1, USART_IT_TC, ENABLE);
+			}
+		}
+		
+	}
+	*/
+}
+
+void BSP_USART6_TxDMA_IRQHandler(void)
+{
+
 }
 
 
-// --------Function -------------
 
-		// ----Send ----
+void BSP_USART_IRQHandler(uint8_t BSP_USARTx)
+{
+	switch(BSP_USARTx )
+	{
+		case BSP_USART1:
+		{
 			/*
-				Uart0 blocking mode has some bug...
+			if(USART_GetITStatus(USART1, USART_IT_RXNE) == SET)
+			{
+				USART_ClearITPendingBit(USART1,USART_IT_RXNE);
+			}
+			if(USART_GetITStatus(USART1, USART_IT_TC) == SET)
+			{
+				
+				USART_ClearITPendingBit(USART1,USART_IT_TC);
+				if(USART_GetFlagStatus(USART1, USART_FLAG_TXE) == SET)
+				{
+					bsp_usart_485en_R(BSP_USART1);
+					USART_ITConfig(USART1, USART_IT_TC, DISABLE);
+				}
+				
+				
+			}			
+			if(USART_GetITStatus(USART1, USART_IT_IDLE) == SET)
+			{
+				USART_ReceiveData(USART1);
+				USART_GetITStatus(USART1, USART_IT_IDLE);
+				
+				//DEBUG("IDEL:%d\r\n",DMA_GetCurrDataCounter(DMA2_Stream5));
+				
+				STM32F4xxUSART_Instance[BSP_USART1].RxBuf.Count += BSP_USART1_RXBUF_SIZE - DMA2_Stream5->NDTR;
+
+				DMA_Cmd(DMA2_Stream5,DISABLE);
+				DMA2_Stream5->M0AR = (uint32_t)USART1_Rx_Buf;
+				DMA2_Stream5->NDTR = BSP_USART1_RXBUF_SIZE;
+				DMA_Cmd(DMA2_Stream5,ENABLE);
+			}
 			*/
-void BSP_UART_WriteBytes_Blocking(uint8_t BSP_UARTX , uint8_t *buf, uint16_t len)
-{
-	switch(BSP_UARTX)
-	{
-		case BSP_UART0 :LPSCI_WriteBlocking(UART0, buf , len);break;
-		case BSP_UART1 :UART_WriteBlocking(UART1, buf, len);break;
-		case BSP_UART2 :UART_WriteBlocking(UART2, buf, len);break;
+		}
+		break;
+		case BSP_USART6:
+		{
+		
+		}
+		break;
 		default:break;
 	}
+	
+}
+// -------------------Queue -------------------------
+void bsp_usartqueue_init(uint8_t BSP_USARTx)
+{
+	STM32F4xxUSART_Instance[BSP_USARTx].RxBuf.Count = 0;
+	STM32F4xxUSART_Instance[BSP_USARTx].RxBuf.In = 0;
+	STM32F4xxUSART_Instance[BSP_USARTx].RxBuf.Out = 0;
+	STM32F4xxUSART_Instance[BSP_USARTx].TxBuf.Count = 0;
+	STM32F4xxUSART_Instance[BSP_USARTx].TxBuf.In = 0;
+	STM32F4xxUSART_Instance[BSP_USARTx].TxBuf.Out = 0;
 }
 
-void BSP_UART_WriteBytes_DMA(uint8_t BSP_UARTX , uint8_t *buf, uint16_t len)
+static uint16_t bsp_usartTx_getqueuefreespace(uint8_t BSP_USARTx)
 {
-	uart_transfer_t  xfer;
-	xfer.data = buf;
-	xfer.dataSize = len;	
-	switch(BSP_UARTX)
-	{
-		case BSP_UART0:LPSCI_TransferSendDMA(UART0, &uart0_dma_handle, (lpsci_transfer_t *)&xfer); break;
-		case BSP_UART1:break;
-		case BSP_UART2:UART_TransferSendDMA(UART2, &uart_dma_handle, &xfer); break;
-		default:break;
-	}
+	return STM32F4xxUSART_Instance[BSP_USARTx].TxBuf.Size - STM32F4xxUSART_Instance[BSP_USARTx].TxBuf.Count;
 }
 
-		// -------------
-		// ---Rev-------
-
-		// -------------
-
-
-// ------------------------------
-
-// -----------IRQ--------------
-
-void UART2_IRQHandler(void)
+static uint16_t bsp_getusartTx_count(uint8_t BSP_USARTx)
 {
-	//DEBUG("UART2_IRQHandler\r\n");
-	
-	if((UART_GetStatusFlags(UART2) & kUART_RxDataRegFullFlag )== kUART_RxDataRegFullFlag)
+	return STM32F4xxUSART_Instance[BSP_USARTx].TxBuf.Count;
+}
+
+static int8_t bsp_usartTx_enqueue(uint8_t BSP_USARTx, uint8_t * buf,uint16_t len)
+{
+	uint8_t * but_ptr = 0;
+	but_ptr = buf;
+	if(bsp_usartTx_getqueuefreespace(BSP_USARTx) < len)
 	{
-		UART_ClearStatusFlags(UART2, kUART_RxDataRegFullFlag);
-		
-		uint8_t c = 0;
-		c = UART_ReadByte(UART2);
-		DEBUG("Uart R:%X\r\n" , c);
-		
-		//APP_Conf_RevByteOneByte(c);
-		
+		DEBUG("usartTx is full");
+		return -1;
 	}
-	
-	if((UART_GetStatusFlags(UART2) & kUART_RxActiveEdgeInterruptEnable )== kUART_RxActiveEdgeInterruptEnable)
+	while(len --)
 	{
-		UART2->S2 |= UART_S2_RXEDGIF(1);  
+		STM32F4xxUSART_Instance[BSP_USARTx].TxBuf.pData[STM32F4xxUSART_Instance[BSP_USARTx].TxBuf.In] = *(but_ptr);
+		STM32F4xxUSART_Instance[BSP_USARTx].TxBuf.Count ++;
+		STM32F4xxUSART_Instance[BSP_USARTx].TxBuf.In ++;
+		but_ptr ++;
+		STM32F4xxUSART_Instance[BSP_USARTx].TxBuf.In %= STM32F4xxUSART_Instance[BSP_USARTx].TxBuf.Size;
 	}	
-	
+	return 1;
 }
 
-void UART0_IRQHandler(void)
+static int8_t bsp_usartTx_dequeue(uint8_t BSP_USARTx , uint8_t * buf_byte)
 {
-	//DEBUG("UART0_IRQHandler\r\n");
-	
-	if((LPSCI_GetStatusFlags(UART0) & kLPSCI_RxDataRegFullFlag )== kLPSCI_RxDataRegFullFlag)
+	if(bsp_getusartTx_count(BSP_USARTx) > 0)
 	{
-		LPSCI_ClearStatusFlags(UART0, kLPSCI_RxDataRegFullFlag);
-		
-		uint8_t c = 0;
-		c = LPSCI_ReadByte(UART0);
-		DEBUG("Uart R:%X\r\n" , c);
-		
-		//BSP_E32_RevByteOneByte(LPSCI_ReadByte(UART0));
+		* buf_byte =  STM32F4xxUSART_Instance[BSP_USARTx].TxBuf.pData[STM32F4xxUSART_Instance[BSP_USARTx].TxBuf.Out];
+		STM32F4xxUSART_Instance[BSP_USARTx].TxBuf.Out ++;
+		STM32F4xxUSART_Instance[BSP_USARTx].TxBuf.Count --;
+		STM32F4xxUSART_Instance[BSP_USARTx].TxBuf.Out %= STM32F4xxUSART_Instance[BSP_USARTx].TxBuf.Size;
 		
 	}
-
-	if((LPSCI_GetStatusFlags(UART0) & kLPSCI_TxDataRegEmptyFlag )== kLPSCI_TxDataRegEmptyFlag)
+	else
 	{
-		LPSCI_ClearStatusFlags(UART0, kLPSCI_TxDataRegEmptyFlag);
-	}	
-
-	if((LPSCI_GetStatusFlags(UART0) & kLPSCI_RxOverrunFlag )== kLPSCI_RxOverrunFlag)
-	{
-		LPSCI_ClearStatusFlags(UART0, kLPSCI_RxOverrunFlag);
-	}	
+		return -1;
+	}
 	
-	
-	
+	return 1;
 }
 
-void DMA0_IRQHandler(void)
-{
-	DEBUG("DMA0_IRQHandler\r\n");
-	if((DMA_GetChannelStatusFlags(DMA0 , 0) & kDMA_TransactionsBCRFlag )== kDMA_TransactionsBCRFlag)
-	{
-		DMA_ClearChannelStatusFlags( DMA0 , 0 , kDMA_TransactionsBCRFlag);
-	}
-	if((DMA_GetChannelStatusFlags(DMA0 , 0) & kDMA_TransactionsDoneFlag )== kDMA_TransactionsDoneFlag)
-	{
-		UART_TransferAbortSendDMA(UART2, &uart_dma_handle);
-		DMA_ClearChannelStatusFlags( DMA0 , 0 , kDMA_TransactionsDoneFlag);
-	}
-	if((DMA_GetChannelStatusFlags(DMA0 , 0) & kDMA_TransactionsBusyFlag )== kDMA_TransactionsBusyFlag)
-	{
-		DMA_ClearChannelStatusFlags( DMA0 , 0 , kDMA_TransactionsBusyFlag);
-	}
-	if((DMA_GetChannelStatusFlags(DMA0 , 0) & kDMA_TransactionsRequestFlag )== kDMA_TransactionsRequestFlag)
-	{
-		DMA_ClearChannelStatusFlags( DMA0 , 0 , kDMA_TransactionsRequestFlag);
-	}
-	if((DMA_GetChannelStatusFlags(DMA0 , 0) & kDMA_BusErrorOnDestinationFlag )== kDMA_BusErrorOnDestinationFlag)
-	{
-		DMA_ClearChannelStatusFlags( DMA0 , 0 , kDMA_BusErrorOnDestinationFlag);
-	}
-	
-	
-	if((DMA_GetChannelStatusFlags(DMA0 , 1) & kDMA_TransactionsBCRFlag )== kDMA_TransactionsBCRFlag)
-	{
-		DMA_ClearChannelStatusFlags( DMA0 , 1 , kDMA_TransactionsBCRFlag);
-	}
-	if((DMA_GetChannelStatusFlags(DMA0 , 1) & kDMA_TransactionsDoneFlag )== kDMA_TransactionsDoneFlag)
-	{
-		LPSCI_TransferAbortSendDMA(UART0 , &uart0_dma_handle);
-		DMA_ClearChannelStatusFlags( DMA0 , 1 , kDMA_TransactionsDoneFlag);
-	}
-	if((DMA_GetChannelStatusFlags(DMA0 , 1) & kDMA_TransactionsBusyFlag )== kDMA_TransactionsBusyFlag)
-	{
-		DMA_ClearChannelStatusFlags( DMA0 , 1 , kDMA_TransactionsBusyFlag);
-	}
-	if((DMA_GetChannelStatusFlags(DMA0 , 1) & kDMA_TransactionsRequestFlag )== kDMA_TransactionsRequestFlag)
-	{
-		DMA_ClearChannelStatusFlags( DMA0 , 1 , kDMA_TransactionsRequestFlag);
-	}
-	if((DMA_GetChannelStatusFlags(DMA0 , 1) & kDMA_BusErrorOnDestinationFlag )== kDMA_BusErrorOnDestinationFlag)
-	{
-		DMA_ClearChannelStatusFlags( DMA0 , 1 , kDMA_BusErrorOnDestinationFlag);
-	}	
-	
-}
-
-// ----------------------------
-
-
-// ------------Test-------------
-void BSP_Uart_Test_Send(void)
-{
-	DEBUG("BSP_Uart_Test_Send\r\n");
-	uint8_t test_bud[] = {0x00,0x12,0x32,0xff,0x00,0x11,0xcd,0x45};
-	BSP_UART_WriteBytes_DMA(BSP_UART0 , test_bud, sizeof(test_bud));
-}
-
-
-// -----------------------------
 
 /**
  * @}

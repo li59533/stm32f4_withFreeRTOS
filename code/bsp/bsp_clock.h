@@ -70,6 +70,7 @@ typedef enum
  * @{  
  */
 void BSP_Clock_Init(uint8_t bsp_clock_mode);
+void SystemClock_Config(void);
 
 /**
  * @}
